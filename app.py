@@ -185,7 +185,7 @@ class ChatApp:
 
                     # Update the AI message control
                     full_response = new_content
-                    ai_message_control.controls[0].content.value = full_response
+                    ai_message_control.value = full_response
                     self.page.update()
 
         except Exception as ex:
