@@ -5,14 +5,13 @@ Handles all database interactions with MongoDB.
 - Provides CRUD operations for discussions and logs.
 - Implements robust error handling for all database operations.
 """
-import os
+import logging
 from typing import Dict, Any, Optional, List, Tuple
 import pymongo
+from bson.objectid import ObjectId
+from pymongo.errors import ConnectionFailure, OperationFailure
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
-from pymongo.errors import ConnectionFailure, OperationFailure
-from bson.objectid import ObjectId
-import logging
 
 # Set up basic logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -69,7 +68,7 @@ class DatabaseManager:
         Returns:
             bool: True if write was successful, False otherwise.
         """
-        if not self.db:
+        if self.db is None:
             logging.error("Database not connected. Cannot write log.")
             return False
         try:
@@ -90,7 +89,7 @@ class DatabaseManager:
         Returns:
             bool: True if save was successful, False otherwise.
         """
-        if not self.db:
+        if self.db is None:
             logging.error("Database not connected. Cannot save discussion.")
             return False
         try:
@@ -119,7 +118,7 @@ class DatabaseManager:
         Returns:
             Optional[Dict[str, Any]]: The state dictionary or None if not found or on error.
         """
-        if not self.db:
+        if self.db is None:
             logging.error("Database not connected. Cannot load discussion.")
             return None
         try:
