@@ -7,6 +7,7 @@ Handles all database interactions with MongoDB.
 """
 import logging
 from typing import Dict, Any, Optional, List, Tuple
+import time
 import pymongo
 from bson.objectid import ObjectId
 from pymongo.errors import ConnectionFailure, OperationFailure
@@ -72,7 +73,7 @@ class DatabaseManager:
             logging.error("Database not connected. Cannot write log.")
             return False
         try:
-            log_entry = {"node": node, "data": data, "timestamp": pymongo.utcnow()}
+            log_entry = {"node": node, "data": data, "timestamp": int(time.time())}
             self.db.logs.insert_one(log_entry)
             return True
         except OperationFailure as e:
