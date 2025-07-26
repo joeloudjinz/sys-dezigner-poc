@@ -27,8 +27,8 @@ MONGO_DB_NAME = os.getenv("MONGO_DB_NAME")
 
 # --- UI Styling Constants ---
 GLASS_EFFECT = {
-    "bgcolor": ft.colors.with_opacity(0.1, ft.colors.WHITE),
-    "border": ft.border.all(1, ft.colors.with_opacity(0.2, ft.colors.WHITE)),
+    "bgcolor": ft.Colors.with_opacity(0.1, ft.Colors.WHITE),
+    "border": ft.border.all(1, ft.Colors.with_opacity(0.2, ft.Colors.WHITE)),
     "border_radius": ft.border_radius.all(15),
 }
 
@@ -49,7 +49,7 @@ class Message(ft.UserControl):
                     **GLASS_EFFECT,
                     padding=ft.padding.all(15),
                     margin=ft.margin.only(bottom=10, left=60 if not is_user else 0, right=60 if is_user else 0),
-                    content=ft.Text(self.text, size=15, color=ft.colors.WHITE),
+                    content=ft.Text(self.text, size=15, color=ft.Colors.WHITE),
                     expand=True,
                 )
             ],
@@ -82,15 +82,15 @@ class ChatApp:
         self.user_input = ft.TextField(
             hint_text="Type your message or a command like [next]...",
             on_submit=self.on_send_message,
-            border_color=ft.colors.with_opacity(0.3, ft.colors.WHITE),
+            border_color=ft.Colors.with_opacity(0.3, ft.Colors.WHITE),
             border_radius=ft.border_radius.all(10),
-            color=ft.colors.WHITE
+            color=ft.Colors.WHITE
         )
         self.send_button = ft.IconButton(
             icon=ft.icons.SEND_ROUNDED,
             on_click=self.on_send_message,
             tooltip="Send Message",
-            icon_color=ft.colors.WHITE
+            icon_color=ft.Colors.WHITE
         )
         self.new_chat_button = ft.ElevatedButton(
             "New Discussion",
@@ -98,7 +98,7 @@ class ChatApp:
             on_click=self.on_new_discussion,
             style=ft.ButtonStyle(
                 shape=ft.RoundedRectangleBorder(radius=8),
-                bgcolor=ft.colors.with_opacity(0.1, ft.colors.WHITE)
+                bgcolor=ft.Colors.with_opacity(0.1, ft.Colors.WHITE)
             )
         )
         self.history_view = ft.ListView(expand=True, spacing=5)
@@ -109,9 +109,9 @@ class ChatApp:
             padding=10,
             content=ft.Column([
                 ft.Text("Past Discussions", size=18, weight=ft.FontWeight.BOLD),
-                ft.Divider(height=1, color=ft.colors.with_opacity(0.2, ft.colors.WHITE)),
+                ft.Divider(height=1, color=ft.Colors.with_opacity(0.2, ft.Colors.WHITE)),
                 self.new_chat_button,
-                ft.Divider(height=1, color=ft.colors.with_opacity(0.2, ft.colors.WHITE)),
+                ft.Divider(height=1, color=ft.Colors.with_opacity(0.2, ft.Colors.WHITE)),
                 self.history_view
             ])
         )
@@ -134,7 +134,7 @@ class ChatApp:
             gradient=ft.LinearGradient(
                 begin=ft.alignment.top_center,
                 end=ft.alignment.bottom_center,
-                colors=[ft.colors.INDIGO_900, ft.colors.BLACK]
+                colors=[ft.Colors.INDIGO_900, ft.Colors.BLACK]
             ),
             expand=True,
             content=main_content
@@ -199,8 +199,8 @@ class ChatApp:
     def show_error(self, message: str):
         """Displays a non-blocking SnackBar with an error message."""
         self.page.snack_bar = ft.SnackBar(
-            content=ft.Text(message, color=ft.colors.WHITE),
-            bgcolor=ft.colors.RED_700
+            content=ft.Text(message, color=ft.Colors.WHITE),
+            bgcolor=ft.Colors.RED_700
         )
         self.page.snack_bar.open = True
         self.page.update()
@@ -216,7 +216,7 @@ class ChatApp:
                         text=title,
                         data=disc_id,
                         on_click=self.on_history_item_selected,
-                        style=ft.ButtonStyle(color=ft.colors.WHITE70)
+                        style=ft.ButtonStyle(color=ft.Colors.WHITE70)
                     )
                 )
         self.page.update()
@@ -252,7 +252,7 @@ class ChatApp:
 def main(page: ft.Page):
     """The main entry point for the Flet application."""
     if not all([GOOGLE_API_KEY, MONGO_URI, MONGO_DB_NAME]):
-        page.add(ft.Text("Error: Missing necessary environment variables (GOOGLE_API_KEY, MONGO_URI, MONGO_DB_NAME).", color=ft.colors.RED))
+        page.add(ft.Text("Error: Missing necessary environment variables (GOOGLE_API_KEY, MONGO_URI, MONGO_DB_NAME).", color=ft.Colors.RED))
         return
 
     try:
@@ -262,7 +262,7 @@ def main(page: ft.Page):
         ChatApp(page, agent, db_manager)
     except Exception as e:
         logging.critical(f"Failed to initialize application: {e}", exc_info=True)
-        page.add(ft.Text(f"Fatal Error: Could not start the application. Check logs. Error: {e}", color=ft.colors.RED))
+        page.add(ft.Text(f"Fatal Error: Could not start the application. Check logs. Error: {e}", color=ft.Colors.RED))
 
 
 if __name__ == "__main__":
