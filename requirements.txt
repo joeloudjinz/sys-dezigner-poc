@@ -1,0 +1,7 @@
+langchain
+langgraph
+langchain_google_genai
+pymongo
+flet
+python-dotenv
+bson
