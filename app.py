@@ -24,6 +24,7 @@ load_dotenv()
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 MONGO_URI = os.getenv("MONGO_URI")
 MONGO_DB_NAME = os.getenv("MONGO_DB_NAME")
+GEMINI_MODEL="gemini-2.5-pro"
 
 # --- UI Styling Constants ---
 GLASS_EFFECT = {
@@ -257,7 +258,7 @@ def main(page: ft.Page):
 
     try:
         db_manager = DatabaseManager(uri=MONGO_URI, db_name=MONGO_DB_NAME)
-        llm = ChatGoogleGenerativeAI(model="gemini-1.5-pro-latest", google_api_key=GOOGLE_API_KEY, temperature=0.7)
+        llm = ChatGoogleGenerativeAI(model=GEMINI_MODEL, google_api_key=GOOGLE_API_KEY, temperature=0.7)
         agent = SystemDesignAgent(llm=llm, db_manager=db_manager)
         ChatApp(page, agent, db_manager)
     except Exception as e:
