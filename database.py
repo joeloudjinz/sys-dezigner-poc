@@ -144,7 +144,7 @@ class DatabaseManager:
         Returns:
             Optional[List[Tuple[str, str]]]: A list of (id, title) tuples, or None on error.
         """
-        if not self.db:
+        if self.db is not None:
             logging.error("Database not connected. Cannot get discussions.")
             return None
         try:
