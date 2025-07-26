@@ -20,6 +20,23 @@ from prompts import (
     DEEP_DIVE_AND_TRADEOFFS_PROMPT, SUMMARY_PROMPT, ROUTER_PROMPT
 )
 
+AGENT_PHASES = [
+    "vision_and_scoping",
+    "functional_requirements",
+    "data_model",
+    "nfr_and_scale",
+    "architecture_and_components",
+    "deep_dive_and_tradeoffs"
+]
+
+AGENT_PHASE_PROMPTS = {
+    "vision_and_scoping": VISION_AND_SCOPING_PROMPT,
+    "functional_requirements": FUNCTIONAL_REQUIREMENTS_PROMPT,
+    "data_model": DATA_MODEL_PROMPT,
+    "nfr_and_scale": NFR_AND_SCALE_PROMPT,
+    "architecture_and_components": ARCHITECTURE_AND_COMPONENTS_PROMPT,
+    "deep_dive_and_tradeoffs": DEEP_DIVE_AND_TRADEOFFS_PROMPT,
+}
 
 class AgentState(TypedDict):
     """Represents the state of our conversation graph."""
@@ -43,25 +60,6 @@ class SystemDesignAgent:
         """
         self.llm = llm
         self.db_manager = db_manager
-
-        self.phases = [
-            "vision_and_scoping",
-            "functional_requirements",
-            "data_model",
-            "nfr_and_scale",
-            "architecture_and_components",
-            "deep_dive_and_tradeoffs"
-        ]
-
-        self.phase_prompts = {
-            "vision_and_scoping": VISION_AND_SCOPING_PROMPT,
-            "functional_requirements": FUNCTIONAL_REQUIREMENTS_PROMPT,
-            "data_model": DATA_MODEL_PROMPT,
-            "nfr_and_scale": NFR_AND_SCALE_PROMPT,
-            "architecture_and_components": ARCHITECTURE_AND_COMPONENTS_PROMPT,
-            "deep_dive_and_tradeoffs": DEEP_DIVE_AND_TRADEOFFS_PROMPT,
-        }
-
         self.graph = self._create_graph()
 
     def _create_graph(self) -> StateGraph:
@@ -69,30 +67,36 @@ class SystemDesignAgent:
         graph = StateGraph(AgentState)
 
         # Add nodes for each phase
-        for phase_name in self.phases:
+        for phase_name in AGENT_PHASES:
             graph.add_node(phase_name, self._create_phase_node(phase_name))
         graph.add_node("summarize", self._summary_node)
 
         # Define the entry point
-        graph.set_entry_point(self.phases[0])
+        graph.set_entry_point(AGENT_PHASES[0])
 
         # Add edges for the standard flow
         graph.add_conditional_edges(
-            self.phases[0],
+            AGENT_PHASES[0],
             self._router,
-            {**{p: p for p in self.phases}, "summarize": "summarize", "end": END}
+            {**{p: p for p in AGENT_PHASES}, "summarize": "summarize", "end": END}
         )
-        for i in range(1, len(self.phases)):
+        for i in range(1, len(AGENT_PHASES)):
             graph.add_conditional_edges(
-                self.phases[i],
+                AGENT_PHASES[i],
                 self._router,
-                {**{p: p for p in self.phases}, "summarize": "summarize", "end": END}
+                {**{p: p for p in AGENT_PHASES}, "summarize": "summarize", "end": END}
             )
 
         # The summary node can only end the conversation
         graph.add_edge("summarize", END)
+        agent = graph.compile()
 
-        return graph.compile()
+        # Printing the flow of the agent as png image
+        # image = agent.get_graph().draw_mermaid_png()
+        # with open("agent_flow.png", "wb") as f:
+        #     f.write(image)
+
+        return agent
 
     def _format_history(self, history: List[Tuple[str, str]]) -> List[BaseMessage]:
         """Formats the custom history tuple into LangChain messages."""
@@ -118,7 +122,7 @@ class SystemDesignAgent:
                 *self._format_history(state["conversation_history"])
             ]
             if is_new_phase:
-                prompt_messages.append(HumanMessage(content=self.phase_prompts[phase_name]))
+                prompt_messages.append(HumanMessage(content=AGENT_PHASE_PROMPTS[phase_name]))
 
             try:
                 response = self.llm.invoke(prompt_messages)
@@ -141,33 +145,49 @@ class SystemDesignAgent:
         return phase_node
 
     def _router(self, state: AgentState) -> str:
-        """Determines the next node to visit based on user command."""
+        """Determines the next node to visit based on user command, using the router prompt for LLM-based routing if no explicit command is given."""
         self.db_manager.write_log("router", {"command": state["user_command"]})
         command = state["user_command"].lower().strip()
         current_phase = state["current_phase"]
 
         if "[next]" in command:
-            current_index = self.phases.index(current_phase)
-            next_index = min(current_index + 1, len(self.phases) - 1)
-            return self.phases[next_index]
+            current_index = AGENT_PHASES.index(current_phase)
+            next_index = min(current_index + 1, len(AGENT_PHASES) - 1)
+            return AGENT_PHASES[next_index]
         elif "[back]" in command:
-            current_index = self.phases.index(current_phase)
+            current_index = AGENT_PHASES.index(current_phase)
             next_index = max(current_index - 1, 0)
-            return self.phases[next_index]
+            return AGENT_PHASES[next_index]
         elif "[summarize]" in command:
             return "summarize"
         elif "[end]" in command or "[exit]" in command:
             return "end"
         else:
-            # If no command, stay in the current phase for more discussion
-            return current_phase
+            # Use LLM-based router prompt if no explicit command is given
+            try:
+                prompt = ChatPromptTemplate.from_template(ROUTER_PROMPT)
+                chain = prompt | self.llm
+                response = chain.invoke({
+                    "current_phase": current_phase,
+                    "user_command": state["user_command"]
+                })
+                next_node = response.content.strip().lower()
+                # Validate the LLM output
+                valid_choices = set(AGENT_PHASES + ["summarize", "end"])
+                if next_node in valid_choices:
+                    return next_node
+                else:
+                    return current_phase
+            except Exception as e:
+                logging.error(f"LLM router failed: {e}")
+                return current_phase
 
     def _summary_node(self, state: AgentState) -> Dict[str, Any]:
         """Generates and presents a summary of the design document."""
         self.db_manager.write_log("summary", {"discussion_id": state["discussion_id"]})
 
         full_document_text = ""
-        for phase in self.phases:
+        for phase in AGENT_PHASES:
             if phase in state["design_document"]:
                 full_document_text += f"--- {phase.replace('_', ' ').title()} ---\n{state['design_document'][phase]}\n\n"
 
@@ -205,7 +225,7 @@ class SystemDesignAgent:
                 current_state: AgentState = {
                     "discussion_id": new_id,
                     "conversation_history": [],
-                    "current_phase": self.phases[0],
+                    "current_phase": AGENT_PHASES[0],
                     "design_document": {},
                     "user_command": ""
                 }

@@ -13,7 +13,7 @@ import os
 import threading
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
-from agent import SystemDesignAgent
+from agent import SystemDesignAgent, AGENT_PHASES
 from database import DatabaseManager
 import logging
 
@@ -173,7 +173,7 @@ class ChatApp:
                     break
 
                 # The first chunk contains the full new state, not message content
-                if list(chunk.keys())[0] in self.agent.phases + ["summarize"]:
+                if list(chunk.keys())[0] in AGENT_PHASES + ["summarize"]:
                     latest_step = list(chunk.values())[0]
                     # Update current discussion ID if it's a new chat
                     if not self.current_discussion_id:
