@@ -87,14 +87,14 @@ class ChatApp:
             color=ft.Colors.WHITE
         )
         self.send_button = ft.IconButton(
-            icon=ft.icons.SEND_ROUNDED,
+            icon=ft.Icons.SEND_ROUNDED,
             on_click=self.on_send_message,
             tooltip="Send Message",
             icon_color=ft.Colors.WHITE
         )
         self.new_chat_button = ft.ElevatedButton(
             "New Discussion",
-            icon=ft.icons.ADD_COMMENT_ROUNDED,
+            icon=ft.Icons.ADD_COMMENT_ROUNDED,
             on_click=self.on_new_discussion,
             style=ft.ButtonStyle(
                 shape=ft.RoundedRectangleBorder(radius=8),
