@@ -33,7 +33,7 @@ GLASS_EFFECT = {
 }
 
 
-class Message(ft.UserControl):
+class Message(ft.Text):
     """A chat message control with a distinct style for user and AI."""
 
     def __init__(self, text: str, speaker: str):
